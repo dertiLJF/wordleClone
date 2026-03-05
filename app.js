@@ -3,6 +3,40 @@
 
 // wordle bits
 //
+
+var game = ""; // keeps track of the currently visible game
+
+window.onload = function () {
+    document.getElementById("notWordleNav").onclick = function () {
+        showGame("notWordle"); // ID of the game container
+    };
+    document.getElementById("codeBreakerNav").onclick = function () {
+        showGame("codeBreaker"); // ID of the game container
+    };
+};
+
+function showGame(gameId) {
+    // Hide previous game
+    if (game) {
+        document.getElementById(game).classList.add("hidden");
+    }
+
+    // Show selected game
+    document.getElementById(gameId).classList.remove("hidden");
+
+    // Update currently visible game
+    game = gameId;
+    if (game === "notWordle") {
+        notWordle();
+    } else {
+        codeBreaker();
+    }
+}
+
+//
+//
+//
+
 var height = 6; // number of guesses
 var width = 5; // length of word
 var currentRow = 0; // current attempt
@@ -97,11 +131,6 @@ var legalWords = [];
 var answer = "";
 var guess = "";
 var gameMode = "clean"; // default game mode
-
-window.onload = function () {
-    codeBreaker();
-    // notWordle();
-};
 
 async function fetchWords() {
     try {
@@ -241,13 +270,16 @@ function checkGuess() {
 }
 //
 //
+//
+//
+//
+// Code guessing game
 var codeColumn = 0;
 var codeRow = 0;
 var breakerWidth = 4;
 var breakerHeight = 6;
 var numbers = "";
 
-// Code guessing game
 function codeBreaker() {
     // generate random number
     for (let n = 0; n < breakerWidth; n++) {

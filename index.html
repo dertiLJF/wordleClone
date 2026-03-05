@@ -8,7 +8,13 @@
         <script src="app.js" defer></script>
     </head>
     <body>
-        <div class="notWordle hidden">
+        <nav>
+            <ul>
+                <li class="notWordleNav" id="notWordleNav">NotWordle</li>
+                <li class="codeBreakerNav" id="codeBreakerNav">CodeBreaker</li>
+            </ul>
+        </nav>
+        <div class="notWordle hidden" id="notWordle">
             <h1>NotWordle</h1>
             <br />
             <p>
@@ -19,7 +25,7 @@
             <div class="board" id="board"></div>
             <div class="answer" id="answer"></div>
         </div>
-        <div class="codeBreaker">
+        <div class="codeBreaker hidden" id="codeBreaker">
             <h1>CodeBreaker</h1>
             <br />
             <p>
