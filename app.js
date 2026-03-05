@@ -157,6 +157,12 @@ async function notWordle() {
     // } else {
     //     wordList = wordListRude;
     // }
+    guess = "";
+    answer = "";
+    currentRow = 0;
+    currentCol = 0;
+    // Clear previous tiles
+    document.getElementById("board").innerHTML = "";
 
     wordList = await fetchWords();
     var randomIndex = Math.floor(Math.random() * wordList.length);
@@ -281,6 +287,11 @@ var breakerHeight = 6;
 var numbers = "";
 
 function codeBreaker() {
+    numbers = "";
+    codeColumn = 0;
+    codeRow = 0;
+    // Clear previous tiles
+    document.getElementById("codeBoard").innerHTML = "";
     // generate random number
     for (let n = 0; n < breakerWidth; n++) {
         numbers += Math.floor(Math.random() * 10);
