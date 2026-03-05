@@ -8,16 +8,27 @@
         <script src="app.js" defer></script>
     </head>
     <body>
-        <div class="content">
+        <div class="notWordle hidden">
             <h1>NotWordle</h1>
             <br />
             <p>
                 NotWordle is a word-guessing game that is definitely not the
-                same as Wordle.
+                same as Wordle.<br />To play, guess a 5-letter word in 6 tries
+                (or less).
             </p>
-            <p>To play, guess a 5-letter word in 6 tries (or less).</p>
             <div class="board" id="board"></div>
             <div class="answer" id="answer"></div>
+        </div>
+        <div class="codeBreaker">
+            <h1>CodeBreaker</h1>
+            <br />
+            <p>
+                CodeBreaker is a number guessing game! Input some numbers and it
+                will give you hints. <br />An arrow will appear for any
+                incorrect numbers signifying that the number is either (up
+                arrow) higher, or (down arrow) lower!
+            </p>
+            <div class="codeBoard" id="codeBoard"></div>
         </div>
     </body>
 </html>

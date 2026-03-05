@@ -1,7 +1,12 @@
+// TODO :
+// WORDLE
+
+// wordle bits
+//
 var height = 6; // number of guesses
 var width = 5; // length of word
 var currentRow = 0; // current attempt
-var currentCol = 0; // current letter for attempt
+var currentCol = 0; // current column for attempt
 var gameOver = false;
 var wordListRude = [
     "asses",
@@ -94,7 +99,8 @@ var guess = "";
 var gameMode = "clean"; // default game mode
 
 window.onload = function () {
-    initialize();
+    codeBreaker();
+    // notWordle();
 };
 
 async function fetchWords() {
@@ -116,7 +122,7 @@ async function fetchWords() {
     }
 }
 
-async function initialize() {
+async function notWordle() {
     // if (gameMode === "clean") {
     //     wordList = wordListClean;
     // } else {
@@ -124,11 +130,9 @@ async function initialize() {
     // }
 
     wordList = await fetchWords();
-    console.log(wordList);
     var randomIndex = Math.floor(Math.random() * wordList.length);
     answer = wordList[randomIndex].toUpperCase(); // get random word from word list, and make it uppercase;
-    // for testing put answer on page
-    document.getElementById("answer").innerText = "Answer: " + answer;
+    // document.getElementById("answer").innerText = "Answer: " + answer; // for testing
 
     for (let r = 0; r < height; r++) {
         for (let c = 0; c < width; c++) {
@@ -185,7 +189,6 @@ async function initialize() {
 }
 
 function checkGuess() {
-    console.log("check guess running");
     if (guess == answer) {
         // change boxes to green, alert win message, end game
 
@@ -229,6 +232,134 @@ function checkGuess() {
             }
         }
     }
-    currentRow += 1;
+    currentRow++;
     currentCol = 0;
+    if (currentRow == height) {
+        gameOver = true;
+        alert("You ran out of guesses! You lose!");
+    }
+}
+//
+//
+var codeColumn = 0;
+var codeRow = 0;
+var breakerWidth = 4;
+var breakerHeight = 6;
+var numbers = "";
+
+// Code guessing game
+function codeBreaker() {
+    // generate random number
+    for (let n = 0; n < breakerWidth; n++) {
+        numbers += Math.floor(Math.random() * 10);
+    }
+    console.log(numbers);
+
+    // create board
+    for (let r = 0; r < breakerHeight; r++) {
+        for (let c = 0; c < breakerWidth; c++) {
+            let tile = document.createElement("span");
+            tile.id = r.toString() + "-" + c.toString();
+            tile.classList.add("tile");
+            tile.innerText = "";
+
+            document.getElementById("codeBoard").appendChild(tile);
+        }
+    }
+
+    document.addEventListener("keyup", (e) => {
+        if (gameOver) return;
+
+        if ("Digit0" <= e.code && e.code <= "Digit9") {
+            if (codeColumn < breakerWidth) {
+                let currentTile = document.getElementById(
+                    codeRow.toString() + "-" + codeColumn.toString(),
+                );
+
+                if (currentTile.innerText == "") {
+                    currentTile.innerText = e.code[5];
+                    codeColumn += 1;
+                }
+            }
+        } else if (e.code == "Backspace") {
+            if (codeColumn > 0) {
+                codeColumn -= 1;
+                let currentTile = document.getElementById(
+                    codeRow.toString() + "-" + codeColumn.toString(),
+                );
+                currentTile.innerText = "";
+            }
+        } else if (e.code == "Enter") {
+            if (codeColumn == breakerWidth) {
+                let guess = "";
+
+                for (let c = 0; c < breakerWidth; c++) {
+                    let currentTile = document.getElementById(
+                        codeRow.toString() + "-" + c.toString(),
+                    );
+                    guess += currentTile.innerText;
+                }
+
+                checkNumber(guess, numbers);
+            }
+        } else if (e.code == "Enter") {
+            if (codeColumn == breakerWidth) {
+                // check the guess
+                let guess = "";
+                for (let c = 0; c < breakerWidth; c++) {
+                    let currentTile = document.getElementById(
+                        codeRow.toString() + "-" + c.toString(),
+                    );
+                    guess += currentTile.innerText; // add the letter in each tile to the guess
+                }
+
+                checkNumber(guess, numbers);
+            }
+        }
+    });
+}
+
+function checkNumber(guess, numbers) {
+    console.log("test - checking numbers"); // for testing
+    if (guess === numbers) {
+        for (let c = 0; c < breakerWidth; c++) {
+            let currentTile = document.getElementById(
+                codeRow.toString() + "-" + c.toString(),
+            );
+            currentTile.classList.add("correct"); // add correct class to all tiles in row, so they turn green in css
+        }
+        alert("Congratulations! You won!");
+        return;
+    } else {
+        for (let pos = 0; pos < guess.length; pos++) {
+            if (guess[pos] === numbers[pos]) {
+                let currentTile = document.getElementById(
+                    codeRow.toString() + "-" + pos.toString(),
+                );
+                currentTile.classList.add("correct");
+            } else if (guess[pos] < numbers[pos]) {
+                let position = document.getElementById(
+                    codeRow.toString() + "-" + pos.toString(),
+                );
+                position.classList.add("position");
+                let symbol = document.createElement("p");
+                symbol.innerHTML = "&#8593;";
+                position.appendChild(symbol);
+            } else {
+                let position = document.getElementById(
+                    codeRow.toString() + "-" + pos.toString(),
+                );
+                position.classList.add("position");
+                let symbol = document.createElement("p");
+                symbol.innerHTML = "&#8595;";
+                position.appendChild(symbol);
+            }
+        }
+    }
+    codeRow++;
+    codeColumn = 0;
+    if (codeRow == breakerHeight) {
+        gameOver = true;
+        alert("You ran out of guesses! You lose!");
+    }
 }
