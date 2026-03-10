@@ -1,42 +1,56 @@
-// TODO :
-// WORDLE
+// WORDLE + CODEBREAKER
 
-// wordle bits
-//
-
-var game = ""; // keeps track of the currently visible game
+var game = "";
+var listenerAdded = false;
 
 window.onload = function () {
-    // default game
-    if (game == "") {
+    setupKeyListener();
+
+    if (game === "") {
         game = "codeBreaker";
         showGame(game);
     }
-    // on navigation clicks
+
     document.getElementById("notWordleNav").onclick = function () {
-        showGame("notWordle"); // ID of the game container
+        showGame("notWordle");
     };
+
     document.getElementById("codeBreakerNav").onclick = function () {
-        showGame("codeBreaker"); // ID of the game container
+        showGame("codeBreaker");
     };
 };
 
+function setupKeyListener() {
+    if (listenerAdded) return;
+
+    document.addEventListener("keyup", handleInput);
+
+    listenerAdded = true;
+}
+
+function handleInput(e) {
+    if (gameOver) return;
+
+    if (game === "notWordle") {
+        handleWordleInput(e);
+    }
+
+    if (game === "codeBreaker") {
+        handleCodeBreakerInput(e);
+    }
+}
+
 function showGame(gameId) {
-    // Hide previous game
     if (game) {
         document.getElementById(game).classList.add("hidden");
         document.getElementById(game + "Nav").classList.remove("selected");
     }
-    // remove highlight specific nav
-    document.getElementById(gameId + "Nav").classList.remove("selected");
 
-    // Show selected game
     document.getElementById(gameId).classList.remove("hidden");
-    // highlight specific nav
     document.getElementById(gameId + "Nav").classList.add("selected");
 
-    // Update currently visible game
     game = gameId;
+
     if (game === "notWordle") {
         notWordle();
     } else {
@@ -45,374 +59,234 @@ function showGame(gameId) {
 }
 
 //
-//
+// WORDLE
 //
 
-var height = 6; // number of guesses
-var width = 5; // length of word
-var currentRow = 0; // current attempt
-var currentCol = 0; // current column for attempt
+var height = 6;
+var width = 5;
+
+var currentRow = 0;
+var currentCol = 0;
+
 var gameOver = false;
-var wordListRude = [
-    "asses",
-    "dicks",
-    "prick",
-    "cunts",
-    "sluts",
-    "skank",
-    "twats",
-    "shits",
-    "fucks",
-    "cocks",
-    "scums",
-    "louse",
-    "lousy",
-    "jerks",
-    "boobs",
-    "idiot",
-    "moron",
-    "whore",
-    "craps",
-    "pussy",
-    "wanks",
-    "filth",
-    "scabs",
-    "snots",
-    "punks",
-    "worms",
-    "dirty",
-    "grubs",
-    "loser",
-    "stink",
-    "reeks",
-    "fugly",
-    "skuzz",
-];
-var wordListClean = [
-    "apple",
-    "bread",
-    "chair",
-    "table",
-    "plant",
-    "light",
-    "sound",
-    "stone",
-    "water",
-    "earth",
-    "cloud",
-    "river",
-    "ocean",
-    "field",
-    "grass",
-    "smile",
-    "laugh",
-    "dream",
-    "sweet",
-    "spice",
-    "train",
-    "plane",
-    "truck",
-    "phone",
-    "watch",
-    "clock",
-    "glass",
-    "plate",
-    "spoon",
-    "knife",
-    "shirt",
-    "pants",
-    "shoes",
-    "socks",
-    "paper",
-    "brush",
-    "paint",
-    "color",
-    "music",
-    "piano",
-    "flute",
-    "drums",
-    "heart",
-    "brain",
-    "hands",
-    "teeth",
-    "mouth",
-];
+
 var wordList = [];
-var legalWords = [];
 var answer = "";
 var guess = "";
-var gameMode = "clean"; // default game mode
 
 async function fetchWords() {
     try {
         const response = await fetch(
             "https://api.datamuse.com/words?sp=?????&max=5000",
         );
+
         const data = await response.json();
 
         const wordsArray = data
-            .map((item) => item.word.toLowerCase()) // extract word
-            .filter((word) => /^[a-z]{5}$/.test(word)); // ensures only five letter words
+            .map((item) => item.word.toLowerCase())
+            .filter((word) => /^[a-z]{5}$/.test(word));
 
-        // console.log(`Loaded ${wordsArray.length} words`);
         return wordsArray;
     } catch (error) {
-        console.error("Error fetching words: ", error);
+        console.error(error);
         return [];
     }
 }
 
 async function notWordle() {
-    // if (gameMode === "clean") {
-    //     wordList = wordListClean;
-    // } else {
-    //     wordList = wordListRude;
-    // }
-    guess = "";
-    answer = "";
+    gameOver = false;
+
     currentRow = 0;
     currentCol = 0;
-    // Clear previous tiles
+
     document.getElementById("board").innerHTML = "";
 
-    wordList = await fetchWords();
-    var randomIndex = Math.floor(Math.random() * wordList.length);
-    answer = wordList[randomIndex].toUpperCase(); // get random word from word list, and make it uppercase;
-    // document.getElementById("answer").innerText = "Answer: " + answer; // for testing
+    if (wordList.length === 0) {
+        wordList = await fetchWords();
+    }
+
+    let randomIndex = Math.floor(Math.random() * wordList.length);
+    answer = wordList[randomIndex].toUpperCase();
 
     for (let r = 0; r < height; r++) {
         for (let c = 0; c < width; c++) {
             let tile = document.createElement("span");
-            tile.id = r.toString() + "-" + c.toString(); // e.g 0-1, 1-3
-            tile.classList.add("tile"); // give class 'tile', so we can style it in css
-            tile.innerText = ""; // placeholder text
+
+            tile.id = `w-${r}-${c}`;
+            tile.classList.add("tile");
+
             document.getElementById("board").appendChild(tile);
         }
     }
+}
 
-    // listen for key press
-    document.addEventListener("keyup", (e) => {
-        if (gameOver) return; // if end of game, stop game
+function handleWordleInput(e) {
+    if ("KeyA" <= e.code && e.code <= "KeyZ") {
+        if (currentCol < width) {
+            let tile = document.getElementById(`w-${currentRow}-${currentCol}`);
 
-        // alert(e.code); // for testing, alert the key code of the key pressed
-
-        if ("KeyA" <= e.code && e.code <= "KeyZ") {
-            if (currentCol < width) {
-                let currentTile = document.getElementById(
-                    currentRow.toString() + "-" + currentCol.toString(),
-                );
-                if (currentTile.innerText == "") {
-                    currentTile.innerText = e.code[3]; // get the letter from the key code, e.g. 'KeyA' = 'A'
-                    currentCol += 1;
-                }
-            }
-        } else if (e.code == "Backspace") {
-            if (currentCol > 0) {
-                currentCol -= 1;
-                let currentTile = document.getElementById(
-                    currentRow.toString() + "-" + currentCol.toString(),
-                );
-                currentTile.innerText = "";
-            }
-        } else if (e.code == "Enter") {
-            if (currentCol == width) {
-                // check the guess
-                guess = "";
-                for (let c = 0; c < width; c++) {
-                    let currentTile = document.getElementById(
-                        currentRow.toString() + "-" + c.toString(),
-                    );
-                    guess += currentTile.innerText; // add the letter in each tile to the guess
-                }
-                let checkWord = guess.toLowerCase();
-
-                if (wordList.includes(checkWord)) {
-                    checkGuess(guess);
-                }
+            if (tile.innerText === "") {
+                tile.innerText = e.code[3];
+                currentCol++;
             }
         }
-    });
+    } else if (e.code === "Backspace") {
+        if (currentCol > 0) {
+            currentCol--;
+
+            let tile = document.getElementById(`w-${currentRow}-${currentCol}`);
+            tile.innerText = "";
+        }
+    } else if (e.code === "Enter") {
+        if (currentCol === width) {
+            guess = "";
+
+            for (let c = 0; c < width; c++) {
+                let tile = document.getElementById(`w-${currentRow}-${c}`);
+                guess += tile.innerText;
+            }
+
+            if (wordList.includes(guess.toLowerCase())) {
+                checkGuess();
+            }
+        }
+    }
 }
 
 function checkGuess() {
-    if (guess == answer) {
-        // change boxes to green, alert win message, end game
-
+    if (guess === answer) {
         for (let c = 0; c < width; c++) {
-            let currentTile = document.getElementById(
-                currentRow.toString() + "-" + c.toString(),
-            );
-            currentTile.classList.add("correct"); // add correct class to all tiles in row, so they turn green in css
+            document
+                .getElementById(`w-${currentRow}-${c}`)
+                .classList.add("correct");
         }
-        alert("Congratulations! You won!");
+
+        gameOver = true;
+        alert("You won!");
         return;
-    } else {
-        // change to green if letter in correct position
-        for (let pos = 0; pos < guess.length; pos++) {
-            if (guess[pos] === answer[pos]) {
-                let position = document.getElementById(
-                    currentRow.toString() + "-" + pos.toString(),
-                );
-                position.classList.add("correct");
-            }
-        }
-        // change to yellow if letter is there but incorrect position
-        for (let pos = 0; pos < guess.length; pos++) {
-            if (guess[pos] !== answer[pos] && answer.includes(guess[pos])) {
-                let position = document.getElementById(
-                    currentRow.toString() + "-" + pos.toString(),
-                );
-                position.classList.add("position");
-            }
-        }
-        // change to grey if letter is not in word
-        for (let pos = 0; pos < guess.length; pos++) {
-            let position = document.getElementById(
-                currentRow.toFixed() + "-" + pos.toString(),
-            );
-            if (
-                !position.classList.contains("correct") &&
-                !position.classList.contains("position")
-            ) {
-                position.classList.add("incorrect");
-            }
+    }
+
+    for (let pos = 0; pos < guess.length; pos++) {
+        let tile = document.getElementById(`w-${currentRow}-${pos}`);
+
+        if (guess[pos] === answer[pos]) {
+            tile.classList.add("correct");
+        } else if (answer.includes(guess[pos])) {
+            tile.classList.add("position");
+        } else {
+            tile.classList.add("incorrect");
         }
     }
+
     currentRow++;
     currentCol = 0;
-    if (currentRow == height) {
+
+    if (currentRow === height) {
         gameOver = true;
-        alert("You ran out of guesses! You lose!");
+        alert("You lose!");
     }
 }
+
 //
+// CODEBREAKER
 //
-//
-//
-//
-// Code guessing game
-var codeColumn = 0;
-var codeRow = 0;
+
 var breakerWidth = 4;
 var breakerHeight = 6;
+
+var codeRow = 0;
+var codeColumn = 0;
+
 var numbers = "";
 
 function codeBreaker() {
-    numbers = "";
-    codeColumn = 0;
+    gameOver = false;
+
     codeRow = 0;
-    // Clear previous tiles
+    codeColumn = 0;
+
+    numbers = "";
+
     document.getElementById("codeBoard").innerHTML = "";
-    // generate random number
-    for (let n = 0; n < breakerWidth; n++) {
+
+    for (let i = 0; i < breakerWidth; i++) {
         numbers += Math.floor(Math.random() * 10);
     }
-    // console.log(numbers); // show answers for testing
 
-    // create board
     for (let r = 0; r < breakerHeight; r++) {
         for (let c = 0; c < breakerWidth; c++) {
             let tile = document.createElement("span");
-            tile.id = r.toString() + "-" + c.toString();
+
+            tile.id = `c-${r}-${c}`;
             tile.classList.add("tile");
-            tile.innerText = "";
 
             document.getElementById("codeBoard").appendChild(tile);
         }
     }
-
-    document.addEventListener("keyup", (e) => {
-        if (gameOver) return;
-
-        if ("Digit0" <= e.code && e.code <= "Digit9") {
-            if (codeColumn < breakerWidth) {
-                let currentTile = document.getElementById(
-                    codeRow.toString() + "-" + codeColumn.toString(),
-                );
-
-                if (currentTile.innerText == "") {
-                    currentTile.innerText = e.code[5];
-                    codeColumn += 1;
-                }
-            }
-        } else if (e.code == "Backspace") {
-            if (codeColumn > 0) {
-                codeColumn -= 1;
-                let currentTile = document.getElementById(
-                    codeRow.toString() + "-" + codeColumn.toString(),
-                );
-                currentTile.innerText = "";
-            }
-        } else if (e.code == "Enter") {
-            if (codeColumn == breakerWidth) {
-                let guess = "";
-
-                for (let c = 0; c < breakerWidth; c++) {
-                    let currentTile = document.getElementById(
-                        codeRow.toString() + "-" + c.toString(),
-                    );
-                    guess += currentTile.innerText;
-                }
-
-                checkNumber(guess, numbers);
-            }
-        } else if (e.code == "Enter") {
-            if (codeColumn == breakerWidth) {
-                // check the guess
-                let guess = "";
-                for (let c = 0; c < breakerWidth; c++) {
-                    let currentTile = document.getElementById(
-                        codeRow.toString() + "-" + c.toString(),
-                    );
-                    guess += currentTile.innerText; // add the letter in each tile to the guess
-                }
-
-                checkNumber(guess, numbers);
-            }
-        }
-    });
 }
 
-function checkNumber(guess, numbers) {
-    if (guess === numbers) {
-        for (let c = 0; c < breakerWidth; c++) {
-            let currentTile = document.getElementById(
-                codeRow.toString() + "-" + c.toString(),
-            );
-            currentTile.classList.add("correct"); // add correct class to all tiles in row, so they turn green in css
-        }
-        alert("Congratulations! You won!");
-        return;
-    } else {
-        for (let pos = 0; pos < guess.length; pos++) {
-            if (guess[pos] === numbers[pos]) {
-                let currentTile = document.getElementById(
-                    codeRow.toString() + "-" + pos.toString(),
-                );
-                currentTile.classList.add("correct");
-            } else if (guess[pos] < numbers[pos]) {
-                let position = document.getElementById(
-                    codeRow.toString() + "-" + pos.toString(),
-                );
-                position.classList.add("position");
-                let symbol = document.createElement("p");
-                symbol.innerHTML = "&#8593;";
-                position.appendChild(symbol);
-            } else {
-                let position = document.getElementById(
-                    codeRow.toString() + "-" + pos.toString(),
-                );
-                position.classList.add("position");
-                let symbol = document.createElement("p");
-                symbol.innerHTML = "&#8595;";
-                position.appendChild(symbol);
+function handleCodeBreakerInput(e) {
+    if ("Digit0" <= e.code && e.code <= "Digit9") {
+        if (codeColumn < breakerWidth) {
+            let tile = document.getElementById(`c-${codeRow}-${codeColumn}`);
+
+            if (tile.innerText === "") {
+                tile.innerText = e.code[5];
+                codeColumn++;
             }
         }
+    } else if (e.code === "Backspace") {
+        if (codeColumn > 0) {
+            codeColumn--;
+
+            document.getElementById(`c-${codeRow}-${codeColumn}`).innerText =
+                "";
+        }
+    } else if (e.code === "Enter") {
+        if (codeColumn === breakerWidth) {
+            let guess = "";
+
+            for (let c = 0; c < breakerWidth; c++) {
+                guess += document.getElementById(`c-${codeRow}-${c}`).innerText;
+            }
+
+            checkNumber(guess);
+        }
     }
+}
+
+function checkNumber(guess) {
+    if (guess === numbers) {
+        for (let c = 0; c < breakerWidth; c++) {
+            document
+                .getElementById(`c-${codeRow}-${c}`)
+                .classList.add("correct");
+        }
+
+        gameOver = true;
+        alert("You won!");
+        return;
+    }
+
+    for (let pos = 0; pos < guess.length; pos++) {
+        let tile = document.getElementById(`c-${codeRow}-${pos}`);
+
+        if (guess[pos] === numbers[pos]) {
+            tile.classList.add("correct");
+        } else if (guess[pos] < numbers[pos]) {
+            tile.classList.add("position");
+            tile.innerHTML += "↑";
+        } else {
+            tile.classList.add("position");
+            tile.innerHTML += "↓";
+        }
+    }
+
     codeRow++;
     codeColumn = 0;
-    if (codeRow == breakerHeight) {
+
+    if (codeRow === breakerHeight) {
         gameOver = true;
-        alert("You ran out of guesses! You lose!");
+        alert("You lose!");
     }
 }
