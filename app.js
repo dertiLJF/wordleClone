@@ -7,6 +7,12 @@
 var game = ""; // keeps track of the currently visible game
 
 window.onload = function () {
+    // default game
+    if (game == "") {
+        game = "codeBreaker";
+        showGame(game);
+    }
+    // on navigation clicks
     document.getElementById("notWordleNav").onclick = function () {
         showGame("notWordle"); // ID of the game container
     };
@@ -19,10 +25,15 @@ function showGame(gameId) {
     // Hide previous game
     if (game) {
         document.getElementById(game).classList.add("hidden");
+        document.getElementById(game + "Nav").classList.remove("selected");
     }
+    // remove highlight specific nav
+    document.getElementById(gameId + "Nav").classList.remove("selected");
 
     // Show selected game
     document.getElementById(gameId).classList.remove("hidden");
+    // highlight specific nav
+    document.getElementById(gameId + "Nav").classList.add("selected");
 
     // Update currently visible game
     game = gameId;
@@ -143,7 +154,7 @@ async function fetchWords() {
             .map((item) => item.word.toLowerCase()) // extract word
             .filter((word) => /^[a-z]{5}$/.test(word)); // ensures only five letter words
 
-        console.log(`Loaded ${wordsArray.length} words`);
+        // console.log(`Loaded ${wordsArray.length} words`);
         return wordsArray;
     } catch (error) {
         console.error("Error fetching words: ", error);
@@ -296,7 +307,7 @@ function codeBreaker() {
     for (let n = 0; n < breakerWidth; n++) {
         numbers += Math.floor(Math.random() * 10);
     }
-    console.log(numbers);
+    // console.log(numbers); // show answers for testing
 
     // create board
     for (let r = 0; r < breakerHeight; r++) {
@@ -363,7 +374,6 @@ function codeBreaker() {
 }
 
 function checkNumber(guess, numbers) {
-    console.log("test - checking numbers"); // for testing
     if (guess === numbers) {
         for (let c = 0; c < breakerWidth; c++) {
             let currentTile = document.getElementById(
